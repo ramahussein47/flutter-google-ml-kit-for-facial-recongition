@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "570073970473",
+    "project_id": "facial-flutter",
+    "storage_bucket": "facial-flutter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:570073970473:android:f90e286eeec56051a1a938",
+        "android_client_info": {
+          "package_name": "com.example.facial"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZm5TpVs6iB64lu3QOipofRHZdzrEFEUE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
