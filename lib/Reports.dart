@@ -15,10 +15,11 @@ class _ReportsPageState extends State<ReportsPage> {
 
       //backgroundColor: Colors.grey[400],
         appBar: AppBar(
-          title: Text('Reports Page'),
+          title: Text('Reports'),
           centerTitle: true,
 
         ),
+
     );
   }
 }

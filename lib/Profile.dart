@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:facial/pages/ChangePassword.dart';
 import 'package:facial/pages/Login.dart';
 import 'package:facial/pages/RegisterStudent.dart';
@@ -64,7 +64,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
+                MaterialPageRoute(builder: (context) =>  SettingsPage()),
               );
             },
           ),
@@ -101,6 +101,7 @@ class _ProfilePageState extends State<ProfilePage> {
               );
             },
           ),
+          Divider(height: 10,),
             ListTile(  leading: const Icon(Icons.center_focus_weak_outlined),
              trailing: const Icon(Icons.arrow_forward_ios_outlined),
                onTap: (){

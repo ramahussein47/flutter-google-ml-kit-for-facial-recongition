@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,13 +15,17 @@ class FaceDetectionProvider extends ChangeNotifier {
   bool _isDetecting = false;
   List<Face> _faces = [];
   final Set<String> _capturedFaceIds = {}; // Track captured face IDs
+  String status='Camera is Ready';
 
   List<Face> get faces => _faces;
   CameraController get cameraController => _cameraController;
   bool get isDetecting => _isDetecting;
+    bool _showOverlayMessage=true;
+    Timer? _overlayTimer;
+      bool get showOverlayMessage =>_showOverlayMessage;
 
   Future<void> initializeCamera(List<CameraDescription> cameras) async {
-    final CameraDescription? frontCamera = cameras.firstWhere(
+    final CameraDescription frontCamera = cameras.firstWhere(
       (camera) => camera.lensDirection == CameraLensDirection.front,
       orElse: () => throw Exception("Front camera not found."),
     );
@@ -30,13 +35,32 @@ class FaceDetectionProvider extends ChangeNotifier {
       ResolutionPreset.medium,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
+
+
     );
 
     await _cameraController.initialize();
     notifyListeners();
+    status='Camera Ready';
+
+      // timer for the banner message
+        _overlayTimer=Timer(Duration(seconds: 5), () {_showOverlayMessage=false;
+
+          notifyListeners(); });
   }
 
+   Future _analzyzeFace()async{
+       status='Analyzing Face';
+       notifyListeners();
+         await Future.delayed(Duration(seconds: 3));
+
+   }
+
   Future<void> captureAndDetectFaces(BuildContext context) async {
+      status='Analzing Face...';
+
+      notifyListeners();
+      await _analzyzeFace();
     if (_cameraController.value.isInitialized) {
       try {
         final XFile file = await _cameraController.takePicture();
@@ -45,6 +69,9 @@ class FaceDetectionProvider extends ChangeNotifier {
         if (inputImage != null) {
           await _detectFaces(inputImage);
           await _checkAndSaveImage(File(file.path), context);
+            status='Success'!;
+              notifyListeners();
+                await Future.delayed(Duration(seconds: 2));
         }
       } catch (e) {
         print("Error capturing or processing image: $e");
@@ -120,8 +147,8 @@ class FaceDetectionProvider extends ChangeNotifier {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Image Already Captured'),
-          content: Text('A picture for this person has already been taken.'),
+          title: const Text('Image Already Captured'),
+          content: const Text('A picture for this person has already been taken.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -138,34 +165,34 @@ class FaceDetectionProvider extends ChangeNotifier {
   @override
   void dispose() {
     _cameraController.dispose();
+    _overlayTimer?.cancel();
     super.dispose();
+
   }
+
 
 Future<void> registerStudent(String studentName, File imageFile) async {
   try {
-    final uuid = Uuid(); // Create a new UUID instance
-    final studentId = uuid.v4(); // Generate a unique ID
-    final fileName = 'faces/${imageFile.uri.pathSegments.last}';
+    // Create a unique ID for the student
+    final uuid = Uuid();
+    final studentId = uuid.v4();
+    final fileName = 'Faces/${studentId}_${imageFile.uri.pathSegments.last}'; // Ensure unique file name
 
     // Upload the image to Supabase storage
     final storageResponse = await supabase.storage.from('Faces').upload(fileName, imageFile);
 
-    // Ensure storageResponse is checked properly
-    /*if (storageResponse.error != null) {
-      throw Exception("Failed to upload image: ${storageResponse.error!.message}");
-    }*/
 
     // Get the public URL of the uploaded image
     final imageUrl = supabase.storage.from('Faces').getPublicUrl(fileName);
 
     // Insert the student data into the Students table
     final response = await supabase.from('Students').insert({
-      'id': studentId, // Include the student ID
+      'student_id': studentId, // Include the student ID
       'name': studentName,
       'image_url': imageUrl,
       'registered_at': DateTime.now().toIso8601String(),
     });
-
+    // Check for any errors during the insert operation
     if (response.error != null) {
       throw Exception("Failed to register student: ${response.error!.message}");
     }
@@ -173,8 +200,13 @@ Future<void> registerStudent(String studentName, File imageFile) async {
     print('Student "$studentName" registered successfully with ID: $studentId and image URL: $imageUrl');
   } catch (e) {
     print("Error registering student: $e");
+    // Handle the error as needed (e.g., show a dialog)
   }
 }
+
+
+
+
 
 
   Future<void> captureAndRegisterStudent(String studentName, BuildContext context) async {

@@ -10,7 +10,7 @@ class FaceMeshPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.blueAccent
-      ..strokeWidth = 2.0
+      ..strokeWidth = 4.0
       ..style = PaintingStyle.stroke;
 
     for (var face in faces) {

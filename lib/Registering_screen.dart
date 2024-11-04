@@ -1,7 +1,5 @@
 import 'package:facial/pages/Login.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -12,60 +10,10 @@ class RegistrationPage extends StatefulWidget {
 
 class _RegistrationPageState extends State<RegistrationPage> {
   final _formKey = GlobalKey<FormState>();
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
-  Future<void> _registerUser() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        // Register the user in Firebase Auth
-        UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-
-        // Store additional user info in Firestore
-        await _firestore.collection('users').doc(userCredential.user!.uid).set({
-          'name': _nameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'createdAt': Timestamp.now(),
-        });
-
-        // Registration successful
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registration successful!")),
-
-
-        );
-         Navigator.push(context, MaterialPageRoute(builder: (context)=> LoginPage()));
-
-        // Navigate to another page or clear the form
-        _nameController.clear();
-        _emailController.clear();
-        _passwordController.clear();
-          // navigation back to the Login page
-
-
-      }  on FirebaseAuthException  catch (e) {
-       if(e.code=='email-already-in-use'){
-          ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('This email is already in use!',style: TextStyle(
-                  fontStyle: FontStyle.italic,
-              ),))
-          );
-       } else {ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Registration failed: ")),
-        );
-
-       }
-
-      }
-    }
-  }
 
   @override
   void dispose() {
@@ -75,25 +23,44 @@ class _RegistrationPageState extends State<RegistrationPage> {
     super.dispose();
   }
 
+  void _registerUser() {
+    if (_formKey.currentState!.validate()) {
+      // Simulate user registration process (replace this with actual registration logic)
+      String name = _nameController.text;
+      String email = _emailController.text;
+      String password = _passwordController.text;
+
+      // TODO: Add your registration logic here (e.g., calling your backend API)
+
+      // For demonstration, just show a success message and navigate to login
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('User registered: $name')),
+      );
+
+      // Navigate to the login page after registration
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[300],
-
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Center(
-
-
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                  const Icon(Icons.face_6_outlined,
-
+                const Icon(
+                  Icons.face_6_outlined,
                   size: 100,
-                    ),
+                ),
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
@@ -146,20 +113,20 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 ),
                 SizedBox(height: 20),
                 ElevatedButton(
-
                   onPressed: _registerUser,
-                  child: Text("Register",style: TextStyle(
-                    color: Colors.black,
-                  ),),
+                  child: const Text(
+                    "Register",
+                    style: TextStyle(
+                      color: Colors.black,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-           fixedSize:Size(200, 50),
-           shape: BeveledRectangleBorder(
-borderRadius: BorderRadius.circular(6),
-
-           )
-
-                  )
+                    fixedSize: const Size(200, 50),
+                    shape: BeveledRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
                 ),
               ],
             ),
