@@ -101,11 +101,11 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          // Show dialog to enter the student's name
+
           String? studentName = await _showStudentNameDialog();
 
           if (studentName != null && studentName.isNotEmpty) {
-            // Confirm capturing face with the entered student name
+
             bool? confirmed = await showDialog(
               context: context,
               builder: (BuildContext context) {

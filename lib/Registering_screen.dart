@@ -1,5 +1,7 @@
-import 'package:facial/pages/Login.dart';
+import 'package:facial/Homepage.dart';
+import 'package:facial/pages/Loginpage.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -11,37 +13,47 @@ class RegistrationPage extends StatefulWidget {
 class _RegistrationPageState extends State<RegistrationPage> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _registerUser() {
+  Future<void> _registerUser() async {
     if (_formKey.currentState!.validate()) {
-      // Simulate user registration process (replace this with actual registration logic)
-      String name = _nameController.text;
-      String email = _emailController.text;
-      String password = _passwordController.text;
+      // Get form values
+      String email = _emailController.text.trim();
+      String password = _passwordController.text.trim();
 
-      // TODO: Add your registration logic here (e.g., calling your backend API)
+      final sm = ScaffoldMessenger.of(context);
 
-      // For demonstration, just show a success message and navigate to login
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User registered: $name')),
-      );
+      try {
+        // Register the user with Supabase
+        final response = await Supabase.instance.client.auth.signUp(
+          email: email,
+          password: password,
+        );
 
-      // Navigate to the login page after registration
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-      );
+        if (response.user != null) {
+          // Registration successful, show success message
+          sm.showSnackBar(
+            const SnackBar(content: Text('User registered successfully')),
+          );
+
+          // Navigate to the Homepage
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
+          );
+        }
+      } catch (e) {
+        // Handle exceptions without displaying an error message
+        print('An error occurred: $e');
+      }
     }
   }
 
@@ -60,21 +72,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 const Icon(
                   Icons.face_6_outlined,
                   size: 100,
-                ),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    icon: Icon(Icons.person),
-                    border: UnderlineInputBorder(),
-                    hintText: 'Enter your name',
-                    labelText: 'Name',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
                 ),
                 TextFormField(
                   controller: _emailController,
@@ -111,7 +108,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   },
                   obscureText: true,
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _registerUser,
                   child: const Text(

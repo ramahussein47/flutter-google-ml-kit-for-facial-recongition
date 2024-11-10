@@ -134,6 +134,7 @@ class FaceDetectionProvider extends ChangeNotifier {
       options: FaceDetectorOptions(
         enableClassification: true,
         enableTracking: true,
+        performanceMode: FaceDetectorMode.accurate,
       ),
     );
 
@@ -171,75 +172,72 @@ class FaceDetectionProvider extends ChangeNotifier {
   }
 
 
-Future<void> registerStudent(String studentName, File imageFile) async {
+
+
+
+Future<String?> registerStudent(String studentName, File imageFile) async {
+  if (studentName.isEmpty) {
+    throw Exception('Please enter a valid student name.');
+  }
+
+  if (!await imageFile.exists()) {
+    throw Exception('Selected image file does not exist.');
+  }
+
   try {
-    // Create a unique ID for the student
     final uuid = Uuid();
     final studentId = uuid.v4();
-    final fileName = 'Faces/${studentId}_${imageFile.uri.pathSegments.last}'; // Ensure unique file name
+    final fileName = 'Faces/${studentId}_${imageFile.uri.pathSegments.last}';
 
     // Upload the image to Supabase storage
-    final storageResponse = await supabase.storage.from('Faces').upload(fileName, imageFile);
-
+    await Supabase.instance.client.storage.from('Faces').upload(
+      fileName,
+      imageFile,
+      fileOptions: const FileOptions(
+        cacheControl: '3600',
+        upsert: false, // Do not overwrite existing files
+      ),
+    );
 
     // Get the public URL of the uploaded image
-    final imageUrl = supabase.storage.from('Faces').getPublicUrl(fileName);
+    final imageUrl = Supabase.instance.client.storage.from('Faces').getPublicUrl(fileName);
 
-    // Insert the student data into the Students table
-    final response = await supabase.from('Students').insert({
-      'student_id': studentId, // Include the student ID
+    // Insert student data into the Students table
+    await Supabase.instance.client.from('Students').insert({
+      'student_id': studentId,
       'name': studentName,
       'image_url': imageUrl,
       'registered_at': DateTime.now().toIso8601String(),
-    });
-    // Check for any errors during the insert operation
-    if (response.error != null) {
-      throw Exception("Failed to register student: ${response.error!.message}");
-    }
+    }).explain();
 
     print('Student "$studentName" registered successfully with ID: $studentId and image URL: $imageUrl');
+    return studentId;
   } catch (e) {
+    // Handle and display user-friendly error messages using SnackBar or Dialog
     print("Error registering student: $e");
-    // Handle the error as needed (e.g., show a dialog)
+    return null;
   }
 }
 
 
 
+Future<void> captureAndRegisterStudent(String studentName, BuildContext context) async {
+  if (_cameraController.value.isInitialized) {
+    try {
+      final XFile file = await _cameraController.takePicture();
+      final inputImage = await _inputImageFromFilePath(file.path);
 
+      if (inputImage != null) {
+        await _detectFaces(inputImage);
+      }
 
-
-  Future<void> captureAndRegisterStudent(String studentName, BuildContext context) async {
-    if (_cameraController.value.isInitialized) {
-      try {
-        final XFile file = await _cameraController.takePicture();
-        final inputImage = await _inputImageFromFilePath(file.path);
-
-        if (inputImage != null) {
-          await _detectFaces(inputImage);
-        }
-
-        if (_faces.isNotEmpty) {
-          await registerStudent(studentName, File(file.path));
-        } else {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              content: Text('No faces detected. Please try again.'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('OK'),
-                ),
-              ],
-            ),
-          );
-        }
-      } catch (e) {
+      if (_faces.isNotEmpty) {
+        await registerStudent(studentName, File(file.path));
+      } else {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            content: Text('Error capturing or processing the student\'s image.'),
+            content: Text('No faces detected. Please try again.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -249,6 +247,34 @@ Future<void> registerStudent(String studentName, File imageFile) async {
           ),
         );
       }
+    } catch (e) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          content: Text('Error capturing or processing the student\'s image.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
     }
+  } else {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: Text('Camera not initialized.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
+}
+
 }
