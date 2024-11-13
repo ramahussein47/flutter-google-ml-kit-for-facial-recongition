@@ -1,27 +1,20 @@
 import 'package:facial/Registering_screen.dart';
-
 import 'package:facial/pages/Loginpage.dart';
 import 'package:facial/pages/Passwordviewer.dart';
 import 'package:facial/pages/ThemeProvider.dart';
+import 'package:facial/pages/TimeReports.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'package:firebase_core/firebase_core.dart';
 import 'package:facial/FaceDetector.dart';
 import 'package:facial/Homepage.dart';
 import 'package:facial/bottomspage.dart';
 
-
-import 'package:supabase_flutter/supabase_flutter.dart';
-
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Supabase.initialize(
-    url: 'https://exlmbdyshkhqkibirtcw.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4bG1iZHlzaGtocWtpYmlydGN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzA1ODA5NzMsImV4cCI6MjA0NjE1Njk3M30.AISO6BD_878Ih6LeJxGwjO7-vte-ZrxC0WgMznl_2ck',
-      //authFlowType:AuthFlowType.pkce
 
-  );
 
+  await Firebase.initializeApp();
 
   runApp(
     MultiProvider(
@@ -29,9 +22,8 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => BottomPagesProvider()),
         ChangeNotifierProvider(create: (_) => FaceDetectionProvider()),
         ChangeNotifierProvider(create: (_) => Themeprovider()),
-         ChangeNotifierProvider(create: (_)=> Passwordviewer()),
-
-
+        ChangeNotifierProvider(create: (_) => Passwordviewer()),
+        ChangeNotifierProvider(create:(_)=> TimePeriodProvider()),
       ],
       child: const Facial(),
     ),
@@ -49,7 +41,7 @@ class Facial extends StatelessWidget {
           themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           theme: ThemeData.light(),
           darkTheme: ThemeData.dark(),
-          home: Homepage(),
+          home: LoginPage(),
         );
       },
     );

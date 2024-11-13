@@ -22,19 +22,35 @@ class _RegisterStudentPageState extends State<RegisterStudentPage> {
 
   Future<void> _initializeCamera() async {
     // Initialize the cameras in the FaceDetectionProvider
-    final cameras = await availableCameras();
-    await _faceDetectionProvider.initializeCamera(cameras);
+    try {
+      final cameras = await availableCameras();
+      await _faceDetectionProvider.initializeCamera(cameras);
+    } catch (e) {
+      print("Error initializing camera: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error initializing camera')),
+      );
+    }
   }
 
   // Function to register the student's face and name
   void _registerStudent() async {
     final studentName = studentController.text.trim();
     if (studentName.isNotEmpty) {
+      // Show loading feedback to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Registering student...')),
+      );
+
+      // Register the student
       await _faceDetectionProvider.captureAndRegisterStudent(studentName, context);
+
+      // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Student registered successfully')),
       );
     } else {
+      // Show error if name is empty
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter the student\'s name')),
       );
@@ -68,6 +84,8 @@ class _RegisterStudentPageState extends State<RegisterStudentPage> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.done) {
                   return CameraPreview(_faceDetectionProvider.cameraController);
+                } else if (snapshot.hasError) {
+                  return const Center(child: Text('Error loading camera'));
                 } else {
                   return const Center(child: CircularProgressIndicator());
                 }

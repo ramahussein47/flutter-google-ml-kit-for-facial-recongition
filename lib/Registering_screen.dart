@@ -1,7 +1,7 @@
 import 'package:facial/Homepage.dart';
 import 'package:facial/pages/Loginpage.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -12,9 +12,9 @@ class RegistrationPage extends StatefulWidget {
 
 class _RegistrationPageState extends State<RegistrationPage> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void dispose() {
@@ -25,34 +25,33 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
   Future<void> _registerUser() async {
     if (_formKey.currentState!.validate()) {
-      // Get form values
       String email = _emailController.text.trim();
       String password = _passwordController.text.trim();
-
       final sm = ScaffoldMessenger.of(context);
 
       try {
-        // Register the user with Supabase
-        final response = await Supabase.instance.client.auth.signUp(
+        // Create a new user with email and password in Firebase
+        await _auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
 
-        if (response.user != null) {
-          // Registration successful, show success message
-          sm.showSnackBar(
-            const SnackBar(content: Text('User registered successfully')),
-          );
+        sm.showSnackBar(
+          const SnackBar(content: Text('Registration successful!')),
+        );
 
-          // Navigate to the Homepage
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => LoginPage()),
-          );
-        }
+        // Navigate to the Homepage after successful registration
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => Homepage()),
+        );
+      } on FirebaseAuthException catch (e) {
+        sm.showSnackBar(
+          SnackBar(content: Text(e.message ?? 'Registration failed')),
+        );
       } catch (e) {
-        // Handle exceptions without displaying an error message
-        print('An error occurred: $e');
+        sm.showSnackBar(
+          const SnackBar(content: Text('An error occurred, please try again')),
+        );
       }
     }
   }
@@ -124,6 +123,15 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginPage()),
+                    );
+                  },
+                  child: const Text("Already have an account? Login here!"),
                 ),
               ],
             ),

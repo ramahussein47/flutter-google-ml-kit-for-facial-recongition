@@ -1,9 +1,8 @@
 import 'dart:async';
-
 import 'package:facial/Homepage.dart';
 import 'package:facial/Registering_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,17 +12,17 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  late final StreamSubscription<AuthState> _authSubscription;
+  late final StreamSubscription<User?> _authSubscription;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
     super.initState();
 
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((event) {
-      final session = event.session;
-      if (session != null) {
+    _authSubscription = _auth.authStateChanges().listen((User? user) {
+      if (user != null) {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) =>  Homepage()), // Assuming Homepage is a defined widget
+          MaterialPageRoute(builder: (context) => Homepage()), // Assuming Homepage is a defined widget
         );
       }
     });
@@ -47,24 +46,14 @@ class _LoginPageState extends State<LoginPage> {
         final email = _emailController.text.trim();
         final password = _passwordController.text.trim();
 
-        // Sign in the user with email and password
-        final response = await Supabase.instance.client.auth.signInWithPassword(
-          email: email,
-          password: password,
-        );
-
-        if (response.user != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Registration Successful')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Login successful!')),
-          );
-        }
-      } on AuthException catch (error) {
+        // Sign in the user with email and password using Firebase
+        await _auth.signInWithEmailAndPassword(email: email, password: password);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.message)),
+          const SnackBar(content: Text('Login successful!')),
+        );
+      } on FirebaseAuthException catch (error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message ?? 'Authentication error')),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -85,9 +74,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.network('https://lottie.host/embed/a93437c9-4686-49da-a1f7-283880408736/UYtm6LFQhK.json', scale: 2,), // Corrected asset path and format
                 const SizedBox(height: 16.0),
-
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(
@@ -106,7 +93,6 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
                 const SizedBox(height: 16.0),
-
                 TextFormField(
                   controller: _passwordController,
                   decoration: const InputDecoration(
@@ -125,7 +111,6 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
                 const SizedBox(height: 16.0),
-
                 ElevatedButton(
                   onPressed: _login,
                   child: const Text('Login'),
@@ -136,12 +121,17 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                Row(mainAxisAlignment: MainAxisAlignment.end,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                      TextButton(onPressed: (){
-                          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context)=> RegistrationPage()));
-                      }, child: Text('Dont have an account,Click here!'))
-                  ],)
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => RegistrationPage()));
+                      },
+                      child: const Text('Don\'t have an account? Click here!'),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

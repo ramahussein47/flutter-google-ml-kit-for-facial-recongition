@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:camera/camera.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,7 +10,7 @@ import 'dart:convert';
 import 'package:uuid/uuid.dart'; // Add this import for UUID
 
 class FaceDetectionProvider extends ChangeNotifier {
-  final supabase = Supabase.instance.client;
+
   late CameraController _cameraController;
   bool _isDetecting = false;
   List<Face> _faces = [];
@@ -184,39 +184,7 @@ Future<String?> registerStudent(String studentName, File imageFile) async {
     throw Exception('Selected image file does not exist.');
   }
 
-  try {
-    final uuid = Uuid();
-    final studentId = uuid.v4();
-    final fileName = 'Faces/${studentId}_${imageFile.uri.pathSegments.last}';
 
-    // Upload the image to Supabase storage
-    await Supabase.instance.client.storage.from('Faces').upload(
-      fileName,
-      imageFile,
-      fileOptions: const FileOptions(
-        cacheControl: '3600',
-        upsert: false, // Do not overwrite existing files
-      ),
-    );
-
-    // Get the public URL of the uploaded image
-    final imageUrl = Supabase.instance.client.storage.from('Faces').getPublicUrl(fileName);
-
-    // Insert student data into the Students table
-    await Supabase.instance.client.from('Students').insert({
-      'student_id': studentId,
-      'name': studentName,
-      'image_url': imageUrl,
-      'registered_at': DateTime.now().toIso8601String(),
-    }).explain();
-
-    print('Student "$studentName" registered successfully with ID: $studentId and image URL: $imageUrl');
-    return studentId;
-  } catch (e) {
-    // Handle and display user-friendly error messages using SnackBar or Dialog
-    print("Error registering student: $e");
-    return null;
-  }
 }
 
 

@@ -5,8 +5,6 @@ import 'package:facial/pages/RegisterStudentFace.dart';
 import 'package:facial/pages/Settings.dart';
 import 'package:facial/pages/Loginpage.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -90,7 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
           TextButton(
             onPressed: () async {
   try {
-    await Supabase.instance.client.auth.signOut();
+  
     // Sign out successful, navigate back to login screen
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => LoginPage()),
